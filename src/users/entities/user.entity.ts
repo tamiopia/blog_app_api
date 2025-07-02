@@ -1,5 +1,6 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column,OneToMany } from 'typeorm';
 import { UserRole } from '../../shared/constants/roles';
+import { Comment } from '../../comments/entities/comment.entity';
 
 @Entity('users')
 export class User {
@@ -21,4 +22,7 @@ export class User {
     default: UserRole.USER
   })
   role: UserRole;
+
+  @OneToMany(() => Comment, (comment) => comment.user)
+  comments: Comment[];
 }
