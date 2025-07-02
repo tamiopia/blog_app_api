@@ -9,6 +9,8 @@ import { UpdatePostHandler } from './commands/update-post.handler';
 import { DeletePostHandler } from './commands/delete-post.handler';
 import { GetPostByIdHandler } from './queries/get-post-by-id.handler';
 import { GetPostsHandler } from './queries/get-posts.handler';
+import { PostRepository } from './repositories/post.repository';
+import { TypeOrmPostRepository } from './repositories/typeorm-post.repository';
 
 @Module({
   imports: [TypeOrmModule.forFeature([Post]), CqrsModule],
@@ -18,7 +20,11 @@ import { GetPostsHandler } from './queries/get-posts.handler';
     UpdatePostHandler,
     DeletePostHandler,
     GetPostByIdHandler,
-    GetPostsHandler
+    GetPostsHandler,
+    {
+      provide: PostRepository,
+      useClass: TypeOrmPostRepository,
+    },
   ],
 })
 export class PostsModule {}
