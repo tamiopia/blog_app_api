@@ -1,5 +1,15 @@
-import { Entity, Column, PrimaryGeneratedColumn, CreateDateColumn,OneToMany  } from 'typeorm';
-import { Comment } from '../../comments/entities/comment.entity'; 
+
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  CreateDateColumn,
+  ManyToOne,
+  OneToMany,
+  JoinColumn,
+} from 'typeorm';
+import { Comment } from '../../comments/entities/comment.entity';
+import { User } from '../../users/entities/user.entity';
 
 @Entity('posts')
 export class Post {
@@ -15,10 +25,12 @@ export class Post {
   @Column({ nullable: true })
   image: string;
 
+  @ManyToOne(() => User, (user) => user.posts, { eager: false })
+  @JoinColumn({ name: 'userId' }) // makes sure `userId` is still stored in the DB
+  user: User;
+
   @Column()
   userId: string;
-
-  
 
   @OneToMany(() => Comment, (comment) => comment.post)
   comments: Comment[];
