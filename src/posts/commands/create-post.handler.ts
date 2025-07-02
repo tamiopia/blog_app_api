@@ -8,14 +8,17 @@ import { CreatePostCommand } from './create-post.command';
 export class CreatePostHandler implements ICommandHandler<CreatePostCommand> {
   constructor(
     @InjectRepository(Post)
-    private readonly postRepo: Repository<Post>
+    private readonly postRepo: Repository<Post>,
   ) {}
 
   async execute(command: CreatePostCommand): Promise<Post> {
     const post = this.postRepo.create({
       title: command.title,
       content: command.content,
+      image: command.image,
+      userId: command.userId,
     });
+
     return this.postRepo.save(post);
   }
 }
