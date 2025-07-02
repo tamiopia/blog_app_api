@@ -11,10 +11,20 @@ export class GetPostWithCommentsHandler implements IQueryHandler<GetPostWithComm
   ) {}
 
   async execute(query: GetPostWithCommentsQuery): Promise<Post> {
-    return this.postRepo.findOne({
+    const post = await this.postRepo.findOne({
       where: { id: query.postId },
       relations: ['comments', 'comments.user'],
     });
+
+    if (post) {
+      post.comments.forEach(comment => {
+        if (comment.user) {
+          delete comment.user.password;
+        }
+      });
+    }
+
+    return post;
   }
 }
 
