@@ -1,17 +1,25 @@
 import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
+import * as dotenv from 'dotenv';
+dotenv.config();
+
+console.log('🛡️ JWT_SECRET loaded:', process.env.JWT_SECRET); // Debug secret
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor() {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      secretOrKey: 'JWT_SECRET', // Should be env var
+      secretOrKey: process.env.JWT_SECRET, 
     });
   }
 
   async validate(payload: any) {
-    return { userId: payload.sub, username: payload.username, role: payload.role };
+    console.log('🔑 Validating JWT Payload:', payload); // 👈 ADD THIS LINE
+    return { 
+      userId: payload.sub,
+      role: payload.role || 'user'
+    };
   }
 }

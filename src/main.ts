@@ -1,9 +1,17 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { RolesGuard } from './shared/guards/roles.guard';
+import { Reflector } from '@nestjs/core';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  // Add this in your `main.ts` before app.listen()
+app.use((req, res, next) => {
+  console.log('Incoming Headers:', req.headers);
+  next();
+});
 
   const config = new DocumentBuilder()
     .setTitle('Blog API')
@@ -13,8 +21,13 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('api', app, document); // 👈 /api URL
+  SwaggerModule.setup('api', app, document); 
+
+  
+
+app.useGlobalGuards(new RolesGuard(app.get(Reflector)));
 
   await app.listen(3000);
+
 }
 bootstrap();
