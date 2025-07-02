@@ -1,21 +1,86 @@
-import { Controller, Post as HttpPost, Body, Get, Param, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post as HttpPost,
+  Body,
+  UseGuards,
+  BadRequestException,
+  UnauthorizedException,
+  InternalServerErrorException,
+  Logger,
+  Req,
+  Get,
+} from '@nestjs/common';
+import { Request } from 'express';
 import { CommandBus } from '@nestjs/cqrs';
-import { CreatePostCommand } from './commands/create-post.command';
-import { RolesGuard } from '../shared/guards/roles.guard';
-import { Roles } from '../shared/decorators/roles.decorator';
+import {
+  ApiTags,
+  ApiBody,
+  ApiOperation,
+  ApiBearerAuth,
+} from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { CreatePostDto } from './dtos/create-post.dto';
+import { CreatePostCommand } from './commands/create-post.command';
 
+@ApiTags('Posts')
 @Controller('posts')
 export class PostsController {
-  constructor(private commandBus: CommandBus) {}
+  private readonly logger = new Logger(PostsController.name);
+
+  constructor(private readonly commandBus: CommandBus) {}
 
   @HttpPost()
-  @UseGuards(AuthGuard('jwt'), RolesGuard)
-  @Roles('admin', 'user') // Allow both admin and editor roles to create posts
-  
-  async create(@Body() body: { title: string; content: string }) {
-    return this.commandBus.execute(
-      new CreatePostCommand(body.title, body.content)
-    );
+  @ApiOperation({ summary: 'Create a blog post (auth required)' })
+  @ApiBearerAuth()
+  @ApiBody({
+    description: 'Post data (title and content only)',
+    type: CreatePostDto,
+  })
+  @UseGuards(AuthGuard('jwt')) // ✅ Auth only (no RolesGuard for now)
+  async create(
+    @Body() body: CreatePostDto,
+    @Req() req: Request,
+  ) {
+    try {
+      const user = req.user as { userId: string; role: string };
+      if (!user?.userId) {
+        this.logger.warn('Unauthorized attempt to create post.');
+        throw new UnauthorizedException('You must be logged in to create a post.');
+      }
+
+      console.log(req.body)
+
+      if (!body.title || !body.content) {
+        throw new BadRequestException('Post title and content are required.');
+      }
+
+      const command = new CreatePostCommand(
+        body.title,
+        body.content,
+        null, // no image yet
+        user.userId,
+      );
+
+      const result = await this.commandBus.execute(command);
+      return { message: 'Post created successfully', post: result };
+    } catch (error) {
+      this.logger.error('❌ Failed to create post:', error.stack || error);
+      if (error instanceof BadRequestException || error instanceof UnauthorizedException) {
+        throw error;
+      }
+      throw new InternalServerErrorException('Something went wrong while creating the post.');
+    }
+  }
+
+  @Get('test-auth')
+  @UseGuards(AuthGuard('jwt'))
+  @ApiOperation({ summary: 'Test JWT auth and return user info' })
+  @ApiBearerAuth()
+  testAuth(@Req() req: Request) {
+    this.logger.log('✅ test-auth accessed by:', req.user);
+    return {
+      message: 'Authenticated!',
+      user: req.user,
+    };
   }
 }
