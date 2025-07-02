@@ -8,10 +8,7 @@ async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Add this in your `main.ts` before app.listen()
-app.use((req, res, next) => {
-  console.log('Incoming Headers:', req.headers);
-  next();
-});
+
 
   const config = new DocumentBuilder()
     .setTitle('Blog API')
