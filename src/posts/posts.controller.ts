@@ -8,6 +8,8 @@ import {
   InternalServerErrorException,
   Logger,
   Req,
+  UploadedFile,
+  UseInterceptors,
   Get,
 } from '@nestjs/common';
 import { Request } from 'express';
@@ -19,6 +21,9 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { AuthGuard } from '@nestjs/passport';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { CreatePostDto } from './dtos/create-post.dto';
 import { CreatePostCommand } from './commands/create-post.command';
 
@@ -36,10 +41,22 @@ export class PostsController {
     description: 'Post data (title and content only)',
     type: CreatePostDto,
   })
-  @UseGuards(AuthGuard('jwt')) // ✅ Auth only (no RolesGuard for now)
+  @UseGuards(AuthGuard('jwt')) // Auth only (no RolesGuard for now)
+  @UseInterceptors(
+    FileInterceptor('image', {
+      storage: diskStorage({
+        destination: './uploads', // Save to the uploads directory
+        filename: (req, file, cb) => {
+          const uniqueName = `${Date.now()}${extname(file.originalname)}`;
+          cb(null, uniqueName);
+        },
+      }),
+    }),
+  )
   async create(
     @Body() body: CreatePostDto,
     @Req() req: Request,
+    @UploadedFile() file: Express.Multer.File, // Interceptor will handle the file
   ) {
     try {
       const user = req.user as { userId: string; role: string };
@@ -48,16 +65,16 @@ export class PostsController {
         throw new UnauthorizedException('You must be logged in to create a post.');
       }
 
-      console.log(req.body)
-
       if (!body.title || !body.content) {
         throw new BadRequestException('Post title and content are required.');
       }
 
+      const image = file ? file.filename : null; // Handle file upload
+
       const command = new CreatePostCommand(
         body.title,
         body.content,
-        null, // no image yet
+        image, // Attach the uploaded image filename
         user.userId,
       );
 
