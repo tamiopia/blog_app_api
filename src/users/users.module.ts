@@ -7,6 +7,7 @@ import { CqrsModule } from '@nestjs/cqrs';
 import { RegisterUserHandler } from './commands/register-user.handler';
 import { GetUserByIdHandler } from './queries/get-user-by-id.handler';
 
+
 @Module({
   imports: [TypeOrmModule.forFeature([User]), CqrsModule],
   providers: [UsersService, RegisterUserHandler,GetUserByIdHandler],

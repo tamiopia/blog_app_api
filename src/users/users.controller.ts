@@ -12,6 +12,8 @@ import { RegisterUserCommand } from './commands/register-user.command';
 import { GetUserByIdQuery } from './queries/get-user-by-id.query';
 import { User } from './entities/user.entity';
 import { UserRole } from '../shared/constants/roles';
+import { Roles } from '../shared/decorators/roles.decorator';
+
 
 import {
   ApiTags,
@@ -57,4 +59,6 @@ export class UsersController {
     if (!user) throw new NotFoundException('User not found');
     return user;
   }
+
+ 
 }
