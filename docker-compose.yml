@@ -3,7 +3,7 @@ services:
     image: mysql:8
     restart: always
     environment:
-      MYSQL_ROOT_PASSWORD: 
+      MYSQL_ROOT_PASSWORD: root  # <-- You must provide a value here
       MYSQL_DATABASE: blog_db
     ports:
       - "3306:3306"
@@ -11,11 +11,11 @@ services:
       - db_data:/var/lib/mysql
 
   backend:
-    build: ./backend
+    build: .  # Build context is current folder
     ports:
       - "3000:3000"
     volumes:
-      - ./backend:/app
+      - .:/app  # Mount current folder to /app inside the container
     depends_on:
       - db
     environment:
