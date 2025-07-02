@@ -11,7 +11,11 @@ export class GetUserByIdHandler implements IQueryHandler<GetUserByIdQuery> {
     private readonly userRepo: Repository<User>,
   ) {}
 
-  async execute(query: GetUserByIdQuery): Promise<User | null> {
-    return this.userRepo.findOne({ where: { id: query.userId } });
-  }
+async execute(query: GetUserByIdQuery): Promise<Omit<User, 'password'> | null> {
+    const user = await this.userRepo.findOne({ where: { id: query.userId } });
+    if (!user) return null;
+
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword;
+}
 }
